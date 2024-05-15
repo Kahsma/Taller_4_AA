@@ -1,6 +1,7 @@
 import math
 import random
 import itertools
+
 ROWS = 10
 COLUMNS = 10
 MINE_COUNT = 10
@@ -135,21 +136,22 @@ def reveal_mines():
 def has_won():
     return len(EXTENDED | MINES) == len(BOARD)
 
+
 def brute_force_solver():
     squares = [(i, j) for i in range(COLUMNS) for j in range(ROWS)]
     non_mine_squares = [square for square in squares if get_index(*square) not in MINES]
-    
+
     def is_safe_move(board_state, move):
         return get_index(*move) not in MINES
-    
+
     def backtrack(board_state, moves):
         if len(moves) == len(non_mine_squares):
             return True
-        
+
         for square in non_mine_squares:
             if square in moves:
                 continue
-            
+
             if is_safe_move(board_state, square):
                 moves.append(square)
                 if update_board(square, selected=True) is not True:
@@ -170,7 +172,17 @@ def brute_force_solver():
     else:
         print("No Solution Found")
 
+
+def play_random_square():
+    while True:
+        i, j = random.randint(0, COLUMNS - 1), random.randint(0, ROWS - 1)
+        if get_index(i, j) not in MINES:
+            update_board((i, j), selected=True)
+            print("Random square selected: ({}, {})".format(i, j))
+            break
+
 if __name__ == '__main__':
     create_board()
+    play_random_square()
     print(draw_board())
     brute_force_solver()
