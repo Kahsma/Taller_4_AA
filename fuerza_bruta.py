@@ -40,8 +40,10 @@ def create_board():
         BOARD.append('[ ]')
 
     # Create mines
-    while len(MINES) < MINE_COUNT:
-        MINES.add(random.randint(0, squares - 1))
+    while True:
+        if len(MINES) >= MINE_COUNT:
+            break
+        MINES.add(int(math.floor(random.random() * squares)))
 
 
 def draw_board():
@@ -136,6 +138,7 @@ def revisar_casilla_completada(i, j):
     num, casillas_adyacentes = adjacent_squares(i, j)
     casillas_adyacentes_marcadas = [(x, y) for x, y in casillas_adyacentes if get_index(x, y) in MINAS_MARCADAS]
     casillas_adyacentes_no_marcadas = [(x, y) for x, y in casillas_adyacentes if get_index(x, y) not in MINAS_MARCADAS]
+    
     if len(casillas_adyacentes_marcadas) == num_minas:
         for casilla_vacia in casillas_adyacentes_no_marcadas:
             x, y = casilla_vacia
@@ -144,7 +147,7 @@ def revisar_casilla_completada(i, j):
                 if mina_encontrada or has_won():
                     if mina_encontrada:
                         reveal_mines()
-                        print('Juego terminado')
+                        print('¡Ups! Has encontrado una mina.')
                     else:
                         print('¡Ganaste!')
                     return casilla_vacia
@@ -157,10 +160,12 @@ def detectar_minas():
         i, j = casilla
         num_minas, casillas_adyacentes = adjacent_squares(i, j)
         casillas_reveladas = [(x, y) for x, y in casillas_adyacentes if MATRIX[x][y] != '?']
+        
         for casilla_adyacente in casillas_reveladas:
             adj_i, adj_j = casilla_adyacente
             num_minas_adyacentes, casillas_adyacentes_adyacentes = adjacent_squares(adj_i, adj_j)
             casillas_desconocidas = [(x, y) for x, y in casillas_adyacentes_adyacentes if MATRIX[x][y] == '?']
+            
             if len(casillas_desconocidas) == num_minas_adyacentes and len(casillas_desconocidas) > 0 and get_index(*casilla) not in MINAS_MARCADAS:
                 MINAS_MARCADAS.add(get_index(*casilla))
 
@@ -169,12 +174,12 @@ def solver_fuerza_bruta():
     detectar_minas()
 
     casillas_seguras = []
-    casillas_desconocidas = []
+    casillas_pendientes = []
 
     for i in range(ROWS):
         for j in range(COLUMNS):
             if MATRIX[i][j] == '?':
-                casillas_desconocidas.append((i, j))
+                casillas_pendientes.append((i, j))
             else:
                 casilla_completada = revisar_casilla_completada(i, j)
                 if casilla_completada:
@@ -182,12 +187,17 @@ def solver_fuerza_bruta():
 
     if has_won():
         return casillas_seguras[0]
+
     detectar_minas()
-    for tamano_combinacion in range(1, len(casillas_desconocidas) + 1):
-        for combinacion in itertools.combinations(casillas_desconocidas, tamano_combinacion):
+    for tamano_combinacion in range(1, len(casillas_pendientes) + 1):
+        for combinacion in itertools.combinations(casillas_pendientes, tamano_combinacion):
+            combinacion_valida = True
             for casilla in combinacion:
-                if get_index(*casilla) not in MINAS_MARCADAS:
-                    return casilla
+                if get_index(*casilla) in MINAS_MARCADAS:
+                    combinacion_valida = False
+                    break
+            if combinacion_valida:
+                return combinacion[0]
 
     return jugador_aleatorio()
 
@@ -224,5 +234,7 @@ if __name__ == '__main__':
                 reveal_mines()
                 print("Juego terminado!")
                 break
+        if has_won():
+            print("¡Ganaste!")
 
     print(draw_board())
