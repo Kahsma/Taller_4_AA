@@ -131,72 +131,65 @@ def has_won():
     return len(EXTENDED | MINES) == len(BOARD)
 
 MINAS_MARCADAS = set()
-def check_completed_square(i, j):
-    num_mines = MATRIX[i][j]
-    num, adjacent_squares_list = adjacent_squares(i, j)
-    flagged_adjacent_squares = [(x, y) for x, y in adjacent_squares_list if get_index(x, y) in MINAS_MARCADAS]
-    not_flagged_adjacent_squares = [(x, y) for x, y in adjacent_squares_list if get_index(x, y) not in MINAS_MARCADAS]
-    if len(flagged_adjacent_squares) == num_mines:
-        for limp_square in not_flagged_adjacent_squares:
-            x, y = limp_square
+def revisar_casilla_completada(i, j):
+    num_minas = MATRIX[i][j]
+    num, casillas_adyacentes = adjacent_squares(i, j)
+    casillas_adyacentes_marcadas = [(x, y) for x, y in casillas_adyacentes if get_index(x, y) in MINAS_MARCADAS]
+    casillas_adyacentes_no_marcadas = [(x, y) for x, y in casillas_adyacentes if get_index(x, y) not in MINAS_MARCADAS]
+    if len(casillas_adyacentes_marcadas) == num_minas:
+        for casilla_vacia in casillas_adyacentes_no_marcadas:
+            x, y = casilla_vacia
             if MATRIX[x][y] == "?":
-                mine_hit = update_board(limp_square)
-                if mine_hit or has_won():
-                    if mine_hit:
+                mina_encontrada = update_board(casilla_vacia)
+                if mina_encontrada or has_won():
+                    if mina_encontrada:
                         reveal_mines()
-                        print('Game over')
+                        print('Juego terminado')
                     else:
-                        print('You won!')
-                    return limp_square
-    return not_flagged_adjacent_squares[0]
+                        print('¡Ganaste!')
+                    return casilla_vacia
+    return casillas_adyacentes_no_marcadas[0]
 
 
-
-def detect_mines():
-    options = []
-    for i in range(ROWS):
-        for j in range(COLUMNS):
-            if MATRIX[i][j] == '?':
-                options.append((i, j))
-    for square in options:
-        i, j = square
-        num_mines, adjacent_squares_list = adjacent_squares(i, j)
-        revealed_adjacent_squares = [(x, y) for x, y in adjacent_squares_list if MATRIX[x][y] != '?']
-        for adj_square in revealed_adjacent_squares:
-            adj_i, adj_j = adj_square
-            adj_num_mines, adj_adjacent_squares_list = adjacent_squares(adj_i, adj_j)
-            unknown_adjacent_squares = [(x, y) for x, y in adj_adjacent_squares_list if MATRIX[x][y] == '?']
-            if len(unknown_adjacent_squares) == adj_num_mines and len(unknown_adjacent_squares) > 0 and get_index(
-                    *square) not in MINAS_MARCADAS:
-                MINAS_MARCADAS.add(get_index(*square))
+def detectar_minas():
+    opciones = [(i, j) for i in range(ROWS) for j in range(COLUMNS) if MATRIX[i][j] == '?']
+    for casilla in opciones:
+        i, j = casilla
+        num_minas, casillas_adyacentes = adjacent_squares(i, j)
+        casillas_reveladas = [(x, y) for x, y in casillas_adyacentes if MATRIX[x][y] != '?']
+        for casilla_adyacente in casillas_reveladas:
+            adj_i, adj_j = casilla_adyacente
+            num_minas_adyacentes, casillas_adyacentes_adyacentes = adjacent_squares(adj_i, adj_j)
+            casillas_desconocidas = [(x, y) for x, y in casillas_adyacentes_adyacentes if MATRIX[x][y] == '?']
+            if len(casillas_desconocidas) == num_minas_adyacentes and len(casillas_desconocidas) > 0 and get_index(*casilla) not in MINAS_MARCADAS:
+                MINAS_MARCADAS.add(get_index(*casilla))
 
 
 def solver_fuerza_bruta():
-    detect_mines()
+    detectar_minas()
 
-    safe_squares = []
-    unknown_squares = []
+    casillas_seguras = []
+    casillas_desconocidas = []
 
     for i in range(ROWS):
         for j in range(COLUMNS):
             if MATRIX[i][j] == '?':
-                unknown_squares.append((i, j))
+                casillas_desconocidas.append((i, j))
             else:
-                completed_square = check_completed_square(i, j)
-                if completed_square:
-                    safe_squares.append(completed_square)
+                casilla_completada = revisar_casilla_completada(i, j)
+                if casilla_completada:
+                    casillas_seguras.append(casilla_completada)
 
     if has_won():
-        return safe_squares[0]
-    detect_mines()
-    for combination_size in range(1, len(unknown_squares) + 1):
-        for combination in itertools.combinations(unknown_squares, combination_size):
-            for square in combination:
-                if get_index(*square) not in MINAS_MARCADAS:
-                    return square
+        return casillas_seguras[0]
+    detectar_minas()
+    for tamano_combinacion in range(1, len(casillas_desconocidas) + 1):
+        for combinacion in itertools.combinations(casillas_desconocidas, tamano_combinacion):
+            for casilla in combinacion:
+                if get_index(*casilla) not in MINAS_MARCADAS:
+                    return casilla
 
     return jugador_aleatorio()
-
 
 
 
