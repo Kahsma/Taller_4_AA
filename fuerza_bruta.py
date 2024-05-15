@@ -149,7 +149,9 @@ def revisar_casilla_completada(i, j):
                         reveal_mines()
                         print('¡Ups! Has encontrado una mina.')
                     else:
-                        print('¡Ganaste!')
+                        if has_won():
+                            #print('¡Ganaste!')
+                            return casilla_vacia
                     return casilla_vacia
     return casillas_adyacentes_no_marcadas[0]
 
@@ -168,6 +170,8 @@ def detectar_minas():
             
             if len(casillas_desconocidas) == num_minas_adyacentes and len(casillas_desconocidas) > 0 and get_index(*casilla) not in MINAS_MARCADAS:
                 MINAS_MARCADAS.add(get_index(*casilla))
+    print("------------------------------------------")
+    print(draw_board())
 
 
 def solver_fuerza_bruta():
@@ -211,7 +215,7 @@ def jugador_aleatorio():
 
 if __name__ == '__main__':
     create_board()
-    print(draw_board())
+    #print(draw_board())
 
     # Realizar un movimiento aleatorio al principio
     i, j = jugador_aleatorio()
