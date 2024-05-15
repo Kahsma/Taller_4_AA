@@ -10,10 +10,11 @@ BOARD = []
 MINES = set()
 EXTENDED = set()
 
+
 MATRIX = [['?'] * COLUMNS for i in range(ROWS)]
 
 
-class Colors(object):
+class Colors:
     BLUE = '\033[94m'
     GREEN = '\033[92m'
     YELLOW = '\033[93m'
@@ -22,13 +23,13 @@ class Colors(object):
 
 
 def colorize(s, color):
-    return '{}{}{}'.format(color, s, Colors.ENDC)
+    return f"{color}{s}{Colors.ENDC}"
 
 
 def get_index(i, j):
-    if 0 > i or i >= COLUMNS or 0 > j or j >= ROWS:
-        return None
-    return i * ROWS + j
+    if 0 <= i < ROWS and 0 <= j < COLUMNS:
+        return i * COLUMNS + j
+    return None
 
 
 def create_board():
@@ -39,10 +40,8 @@ def create_board():
         BOARD.append('[ ]')
 
     # Create mines
-    while True:
-        if len(MINES) >= MINE_COUNT:
-            break
-        MINES.add(int(math.floor(random.random() * squares)))
+    while len(MINES) < MINE_COUNT:
+        MINES.add(random.randint(0, squares - 1))
 
 
 def draw_board():
@@ -50,9 +49,9 @@ def draw_board():
 
     for j in range(ROWS):
         if j == 0:
-            lines.append('   ' + ''.join(' {} '.format(x) for x in range(COLUMNS)))
+            lines.append('   ' + ''.join(f' {x} ' for x in range(COLUMNS)))
 
-        line = [' {} '.format(j)]
+        line = [f' {j} ']
         for i in range(COLUMNS):
             line.append(BOARD[get_index(i, j)])
         lines.append(''.join(line))
@@ -99,22 +98,16 @@ def update_board(square, selected=True):
     # Check if we hit a mine, and if it was selected by the user or merely traversed
     if index in MINES:
         if not selected:
-            return
+            return True
         BOARD[index] = colorize(' X ', Colors.RED)
         return True
     else:
         num_mines, squares = adjacent_squares(i, j)
         MATRIX[i][j] = num_mines
         if num_mines:
-            if num_mines == 1:
-                text = colorize(num_mines, Colors.BLUE)
-            elif num_mines == 2:
-                text = colorize(num_mines, Colors.GREEN)
-            else:
-                text = colorize(num_mines, Colors.RED)
-
-            BOARD[index] = ' {} '.format(text)
-            return
+            # Use colorize function to color the number of mines
+            BOARD[index] = colorize(f' {num_mines} ', Colors.GREEN if num_mines == 1 else Colors.YELLOW if num_mines == 2 else Colors.RED)
+            return False
         else:
             BOARD[index] = '   '
 
@@ -124,6 +117,7 @@ def update_board(square, selected=True):
                     continue
                 EXTENDED.add(aindex)
                 update_board(asquare, False)
+            return False
 
 
 def reveal_mines():
@@ -136,53 +130,106 @@ def reveal_mines():
 def has_won():
     return len(EXTENDED | MINES) == len(BOARD)
 
-
-def brute_force_solver():
-    squares = [(i, j) for i in range(COLUMNS) for j in range(ROWS)]
-    non_mine_squares = [square for square in squares if get_index(*square) not in MINES]
-
-    def is_safe_move(board_state, move):
-        return get_index(*move) not in MINES
-
-    def backtrack(board_state, moves):
-        if len(moves) == len(non_mine_squares):
-            return True
-
-        for square in non_mine_squares:
-            if square in moves:
-                continue
-
-            if is_safe_move(board_state, square):
-                moves.append(square)
-                if update_board(square, selected=True) is not True:
-                    if backtrack(board_state, moves):
-                        return True
-                    moves.pop()
-                else:
-                    moves.pop()
-                    return False
-
-        return False
-
-    initial_board_state = list(BOARD)
-    moves = []
-    if backtrack(initial_board_state, moves):
-        print("Game Solved")
-        print(draw_board())
-    else:
-        print("No Solution Found")
+MINAS_MARCADAS = set()
+def check_completed_square(i, j):
+    num_mines = MATRIX[i][j]
+    num, adjacent_squares_list = adjacent_squares(i, j)
+    flagged_adjacent_squares = [(x, y) for x, y in adjacent_squares_list if get_index(x, y) in MINAS_MARCADAS]
+    not_flagged_adjacent_squares = [(x, y) for x, y in adjacent_squares_list if get_index(x, y) not in MINAS_MARCADAS]
+    if len(flagged_adjacent_squares) == num_mines:
+        for limp_square in not_flagged_adjacent_squares:
+            x, y = limp_square
+            if MATRIX[x][y] == "?":
+                mine_hit = update_board(limp_square)
+                if mine_hit or has_won():
+                    if mine_hit:
+                        reveal_mines()
+                        print('Game over')
+                    else:
+                        print('You won!')
+                    return limp_square
+    return not_flagged_adjacent_squares[0]
 
 
-def play_random_square():
-    while True:
-        i, j = random.randint(0, COLUMNS - 1), random.randint(0, ROWS - 1)
-        if get_index(i, j) not in MINES:
-            update_board((i, j), selected=True)
-            print("Random square selected: ({}, {})".format(i, j))
-            break
+
+def detect_mines():
+    options = []
+    for i in range(ROWS):
+        for j in range(COLUMNS):
+            if MATRIX[i][j] == '?':
+                options.append((i, j))
+    for square in options:
+        i, j = square
+        num_mines, adjacent_squares_list = adjacent_squares(i, j)
+        revealed_adjacent_squares = [(x, y) for x, y in adjacent_squares_list if MATRIX[x][y] != '?']
+        for adj_square in revealed_adjacent_squares:
+            adj_i, adj_j = adj_square
+            adj_num_mines, adj_adjacent_squares_list = adjacent_squares(adj_i, adj_j)
+            unknown_adjacent_squares = [(x, y) for x, y in adj_adjacent_squares_list if MATRIX[x][y] == '?']
+            if len(unknown_adjacent_squares) == adj_num_mines and len(unknown_adjacent_squares) > 0 and get_index(
+                    *square) not in MINAS_MARCADAS:
+                MINAS_MARCADAS.add(get_index(*square))
+
+
+def solver_fuerza_bruta():
+    detect_mines()
+
+    safe_squares = []
+    unknown_squares = []
+
+    for i in range(ROWS):
+        for j in range(COLUMNS):
+            if MATRIX[i][j] == '?':
+                unknown_squares.append((i, j))
+            else:
+                completed_square = check_completed_square(i, j)
+                if completed_square:
+                    safe_squares.append(completed_square)
+
+    if has_won():
+        return safe_squares[0]
+    detect_mines()
+    for combination_size in range(1, len(unknown_squares) + 1):
+        for combination in itertools.combinations(unknown_squares, combination_size):
+            for square in combination:
+                if get_index(*square) not in MINAS_MARCADAS:
+                    return square
+
+    return jugador_aleatorio()
+
+
+
+
+
+
+def jugador_aleatorio():
+    available_squares = [(i, j) for i in range(ROWS) for j in range(COLUMNS) if MATRIX[i][j] == '?']
+    return random.choice(available_squares)
 
 if __name__ == '__main__':
     create_board()
-    play_random_square()
     print(draw_board())
-    brute_force_solver()
+
+    # Realizar un movimiento aleatorio al principio
+    i, j = jugador_aleatorio()
+    juego_terminado = update_board((i, j))
+
+    if juego_terminado:
+        ()
+        print("Juego terminado!")
+    else:
+        while not has_won():
+            movimiento = solver_fuerza_bruta()
+            if movimiento is None:
+                print("No quedan movimientos.")
+                break
+
+            i, j = movimiento
+            juego_terminado = update_board((i, j))
+
+            if juego_terminado:
+                reveal_mines()
+                print("Juego terminado!")
+                break
+
+    print(draw_board())
