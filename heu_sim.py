@@ -1,6 +1,7 @@
 import math
 import random
-
+import time
+import csv
 
 ROWS = 10
 COLUMNS = 10
@@ -226,18 +227,31 @@ def heuristic():
             if has_won():
                 return (i, j)
 
-if __name__ == '__main__':
+
+def ejecutar_simulacion():
     create_board()
-    print(draw_board())
     while not has_won():
         move = heuristic()
         if move:
             if BOARD[get_index(*move)] == colorize(' X ', Colors.RED):
-                print(draw_board())
-                print("Game Over!")
-                break
+                return False
             elif has_won():
-                print(draw_board())
-                print("You won!")
-                break
-        print(draw_board())
+                return True
+    return has_won()
+
+
+def main():
+    resultados = []
+    for _ in range(100):
+        inicio = time.time()
+        ganado = ejecutar_simulacion()
+        duracion = time.time() - inicio
+        resultados.append((ganado, duracion))
+    with open('resultados_simulacion_heu.csv', 'w', newline='') as archivo_csv:
+        escritor_csv = csv.writer(archivo_csv)
+        escritor_csv.writerow(['Ganado', 'Duracion'])
+        escritor_csv.writerows(resultados)
+
+
+if __name__ == '__main__':
+    main()
