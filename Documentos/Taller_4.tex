@@ -1,0 +1,375 @@
+\documentclass{article}
+\usepackage{graphicx} % Required for inserting images
+\usepackage{amsmath}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage{array}
+\title{Taller 4}
+\author{Camilo Martinez & Alberto Vigna}
+\date{May 2024}
+
+\begin{document}
+
+\maketitle
+
+\section*{Análisis del Problema}
+
+El problema a resolver es la implementación de dos algoritmos para jugar al juego de Buscaminas: uno utilizando una estrategia de fuerza bruta y otro utilizando una heurística. El objetivo es determinar si es posible completar el tablero sin activar ninguna mina.
+
+\section*{Diseño del Algoritmo}
+
+\subsection*{Algoritmo de Fuerza Bruta}
+
+\textbf{Entrada:}
+\begin{itemize}
+    \item \( T \): una matriz de tamaño \( m \times n \) donde \( T[i][j] \) puede ser 'M' (mina) o 'E' (espacio vacío).
+\end{itemize}
+
+\textbf{Salida:}
+\begin{itemize}
+    \item \( \text{resultado} \): booleano, verdadero si se logró completar el juego sin activar minas, falso en caso contrario.
+\end{itemize}
+
+\textbf{Precondiciones:}
+\begin{itemize}
+    \item \( T \) es una matriz de tamaño \( m \times n \) y contiene únicamente 'M' o 'E'.
+\end{itemize}
+
+\textbf{Poscondiciones:}
+\begin{itemize}
+    \item Se han revelado todas las celdas no minadas si el resultado es verdadero.
+    \item No se ha activado ninguna mina si el resultado es verdadero.
+\end{itemize}
+
+\textbf{Descripción del Algoritmo:}
+\begin{enumerate}
+    \item Iterar sobre todas las posibles configuraciones de celdas para descubrir.
+    \item Comprobar si es posible descubrir todas las celdas sin activar una mina.
+\end{enumerate}
+
+\subsection*{Algoritmo Heurístico}
+
+\textbf{Entrada:}
+\begin{itemize}
+    \item \( T \): una matriz de tamaño \( m \times n \) donde \( T[i][j] \) puede ser 'M' (mina) o 'E' (espacio vacío).
+\end{itemize}
+
+\textbf{Salida:}
+\begin{itemize}
+    \item \( \text{resultado} \): booleano, verdadero si se logró completar el juego sin activar minas, falso en caso contrario.
+\end{itemize}
+
+\textbf{Precondiciones:}
+\begin{itemize}
+    \item \( T \) es una matriz de tamaño \( m \times n \) y contiene únicamente 'M' o 'E'.
+\end{itemize}
+
+\textbf{Poscondiciones:}
+\begin{itemize}
+    \item Se han revelado todas las celdas no minadas si el resultado es verdadero.
+    \item No se ha activado ninguna mina si el resultado es verdadero.
+\end{itemize}
+
+\textbf{Descripción del Algoritmo:}
+\begin{enumerate}
+    \item Utilizar información de celdas descubiertas y sus números para deducir las posiciones de las minas.
+    \item Realizar deducciones lógicas y descubrimientos seguros basados en la información conocida.
+\end{enumerate}
+
+\section{Pseudocodigo}
+\subsection{Fuerza Bruta}
+
+\begin{algorithm}[H]
+\caption{Revisar Casilla Completada}
+\begin{algorithmic}[1]
+\REQUIRE $i, j$
+\STATE $num\_minas \gets MATRIX[i][j]$
+\STATE $num, casillas\_adyacentes \gets adjacent\_squares(i, j)$
+\STATE $casillas\_adyacentes\_marcadas \gets obtener\_marcadas(casillas\_adyacentes)$
+\STATE $casillas\_adyacentes\_no\_marcadas \gets obtener\_no\_marcadas(casillas\_adyacentes)$
+\IF{$len(casillas\_adyacentes\_marcadas) = num\_minas$}
+    \FOR{$casilla\_vacia$ \textbf{in} $casillas\_adyacentes\_no\_marcadas$}
+        \IF{$MATRIX[casilla\_vacia] = "?"$}
+            \IF{$update\_board(casilla\_vacia)$ \textbf{or} $has\_won()$}
+                \IF{$mina\_encontrada$}
+                    \STATE $reveal\_mines()$
+                    
+                \ENDIF
+                \RETURN $casilla\_vacia$
+            \ENDIF
+        \ENDIF
+    \ENDFOR
+\ENDIF
+\RETURN $casillas\_adyacentes\_no\_marcadas[0]$
+\end{algorithmic}
+\end{algorithm}
+
+\begin{algorithm}[H]
+\caption{Detectar Minas}
+\begin{algorithmic}[1]
+\STATE $opciones \gets obtener\_opciones()$
+\FOR{$casilla$ \textbf{in} $opciones$}
+    \STATE $i, j \gets casilla$
+    \STATE $num\_minas, casillas\_adyacentes \gets adjacent\_squares(i, j)$
+    \STATE $casillas\_reveladas \gets obtener\_reveladas(casillas\_adyacentes)$
+    \FOR{$casilla\_adyacente$ \textbf{in} $casillas\_reveladas$}
+        \STATE $adj\_i, adj\_j \gets casilla\_adyacente$
+        \STATE $num\_minas\_adyacentes, casillas\_adyacentes\_adyacentes \gets adjacent\_squares(adj\_i, adj\_j)$
+        \STATE $casillas\_desconocidas \gets obtener\_desconocidas(casillas\_adyacentes\_adyacentes)$
+        \IF{$len(casillas\_desconocidas) = num\_minas\_adyacentes$}
+            \STATE $MINAS\_MARCADAS.add(casilla)$
+        \ENDIF
+    \ENDFOR
+\ENDFOR
+\PRINT{draw\_board()}
+\end{algorithmic}
+\end{algorithm}
+\begin{algorithm}[H]
+\caption{Solver Fuerza Bruta}
+\begin{algorithmic}[1]
+\STATE $detectar\_minas()$
+\STATE $casillas\_seguras \gets []$
+\STATE $casillas\_pendientes \gets []$
+\FOR{$i$ \textbf{in} $range(ROWS)$}
+    \FOR{$j$ \textbf{in} $range(COLUMNS)$}
+        \IF{$MATRIX[i][j] = "?"$}
+            \STATE $casillas\_pendientes.append((i, j))$
+        \ELSE
+            \STATE $casilla\_completada \gets revisar\_casilla\_completada(i, j)$
+            \IF{$casilla\_completada$}
+                \STATE $casillas\_seguras.append(casilla\_completada)$
+            \ENDIF
+        \ENDIF
+    \ENDFOR
+\ENDFOR
+\IF{$has\_won()$}
+    \RETURN $casillas\_seguras[0]$
+\ENDIF
+\STATE $detectar\_minas()$
+\FOR{$tamano\_combinacion$ \textbf{in} $range(1, len(casillas\_pendientes) + 1)$}
+    \FOR{$combinacion$ \textbf{in} $itertools.combinations(casillas\_pendientes, tamano\_combinacion)$}
+        \IF{$validar\_combinacion(combinacion)$}
+            \RETURN $combinacion[0]$
+        \ENDIF
+    \ENDFOR
+\ENDFOR
+\RETURN $jugador\_aleatorio()$
+\end{algorithmic}
+\end{algorithm}
+
+\begin{algorithm}[H]
+\caption{Jugador Aleatorio}
+\begin{algorithmic}[1]
+\STATE $available\_squares \gets obtener\_cuadrados\_disponibles()$
+\RETURN $random.choice(available\_squares)$
+\end{algorithmic}
+\end{algorithm}
+La complejidad de \texttt{solver\_fuerza\_bruta()} puede describirse aproximadamente como:
+
+\[
+O(n + \sum_{k=1}^{m} \binom{m}{k} \cdot O(k))
+\]
+
+Donde:
+\begin{align*}
+& n \text{ es el número de casillas en el tablero.} \\
+& m \text{ es el número de casillas pendientes (desconocidas).}
+\end{align*}
+
+Esto se simplifica a:
+
+\[
+O(n + m \cdot 2^m)
+\]
+
+Ya que $\sum_{k=1}^{m} \binom{m}{k} \cdot k$ es $O(m \cdot 2^m)$.
+
+En resumen, la complejidad del solver es exponencial en el peor de los casos debido a la generación y evaluación de combinaciones, lo que hace que sea un enfoque computacionalmente costoso para resolver el juego de Minesweeper.
+
+\subsection{Heuristica}
+
+\begin{algorithm}[H]
+\caption{Revisar Slots}
+\begin{algorithmic}[1]
+\STATE Función revisar\_slots(i, j)
+\STATE minas, casillas $\leftarrow$ casillas\_adyacentes(i, j)
+\STATE minas\_marcadas $\leftarrow$ contar\_marcadas(casillas)
+\IF{minas\_marcadas == minas}
+\FOR{cada casilla en casillas}
+\IF{casilla == '?'}
+\STATE golpe\_mina $\leftarrow$ actualizar\_tablero(casilla, Verdadero)
+\IF{golpe\_mina o ganado()}
+\RETURN casilla
+\ENDIF
+\ENDIF
+\ENDFOR
+\ENDIF
+\RETURN Nada
+\end{algorithmic}
+\end{algorithm}
+
+\begin{algorithm}[H]
+\caption{Detectar Minas}
+\begin{algorithmic}[1]
+\STATE Función detectar\_minas()
+\FOR{cada casilla en matriz}
+\IF{casilla != '?'}
+\STATE continuar
+\ENDIF
+\STATE minas, casillas $\leftarrow$ casillas\_adyacentes(i, j)
+\STATE casillas\_cubiertas $\leftarrow$ [casilla for casilla in casillas if casilla == '?']
+\IF{longitud(casillas\_cubiertas) == minas}
+\FOR{cada casilla en casillas\_cubiertas}
+\STATE matriz[casilla[0]][casilla[1]] $\leftarrow$ 'F'
+\ENDFOR
+\ENDIF
+\ENDFOR
+\end{algorithmic}
+\end{algorithm}
+
+\begin{algorithm}[H]
+\caption{Calcular Probabilidades}
+\begin{algorithmic}[1]
+\STATE Función calcular\_probabilidades()
+\STATE probabilidades $\leftarrow$ \{\}
+\FOR{cada casilla en matriz}
+\IF{casilla != '?'}
+\STATE continuar
+\ENDIF
+\STATE minas, casillas $\leftarrow$ casillas\_adyacentes(i, j)
+\STATE casillas\_cubiertas $\leftarrow$ [casilla for casilla in casillas if casilla == '?']
+\IF{no casillas\_cubiertas}
+\STATE continuar
+\ENDIF
+\STATE probabilidad $\leftarrow$ minas / longitud(casillas\_cubiertas)
+\FOR{cada casilla en casillas\_cubiertas}
+\IF{casilla en probabilidades}
+\STATE probabilidades[casilla] $\leftarrow$ max(probabilidades[casilla], probabilidad)
+\ELSE
+\STATE probabilidades[casilla] $\leftarrow$ probabilidad
+\ENDIF
+\ENDFOR
+\ENDFOR
+\RETURN probabilidades
+\end{algorithmic}
+\end{algorithm}
+
+\begin{algorithm}[H]
+\caption{Encontrar Slot Seguro}
+\begin{algorithmic}[1]
+\STATE Función encontrar\_slot\_seguro(probabilidades)
+\STATE probabilidad\_minima $\leftarrow$ infinito
+\STATE casilla\_segura $\leftarrow$ Nada
+\FOR{cada casilla, probabilidad en probabilidades}
+\IF{probabilidad < probabilidad\_minima}
+\STATE probabilidad\_minima $\leftarrow$ probabilidad
+\STATE casilla\_segura $\leftarrow$ casilla
+\ENDIF
+\ENDFOR
+\RETURN casilla\_segura
+\end{algorithmic}
+\end{algorithm}
+
+\begin{algorithm}[H]
+\caption{Heurística}
+\begin{algorithmic}[1]
+\STATE Función heurística()
+\STATE detectar\_minas()
+\WHILE{Verdadero}
+\FOR{cada casilla en matriz}
+\IF{casilla != '?' y casilla != 'F'}
+\STATE continuar
+\ENDIF
+\STATE resultado $\leftarrow$ revisar\_slots(i, j)
+\IF{resultado y ganado()}
+\RETURN resultado
+\ENDIF
+\ENDFOR
+\STATE probabilidades $\leftarrow$ calcular\_probabilidades()
+\STATE casilla\_segura $\leftarrow$ encontrar\_slot\_seguro(probabilidades)
+\IF{casilla\_segura}
+\STATE golpe\_mina $\leftarrow$ actualizar\_tablero(casilla\_segura, Verdadero)
+\IF{golpe\_mina o ganado()}
+\RETURN casilla\_segura
+\ENDIF
+\ELSE
+\STATE romper
+\ENDIF
+\ENDWHILE
+\WHILE{Verdadero}
+\STATE i, j $\leftarrow$ aleatorio(0, FILAS - 1), aleatorio(0, COLUMNAS - 1)
+\IF{matriz[i][j] == '?'}
+\STATE golpe\_mina $\leftarrow$ actualizar\_tablero((i, j), Verdadero)
+\IF{golpe\_mina o ganado()}
+\RETURN (i, j)
+\ENDIF
+\ENDIF
+\ENDWHILE
+\end{algorithmic}
+\end{algorithm}
+La función \texttt{heuristic} en el código proporcionado es un solucionador de Buscaminas que utiliza una combinación de estrategias deterministas y probabilísticas para realizar movimientos.
+
+La complejidad temporal de la función \texttt{heuristic} está determinada principalmente por los bucles anidados que iteran sobre todo el tablero de juego, que es una cuadrícula 2D de tamaño $FILAS \times COLUMNAS$.
+
+\begin{itemize}
+    \item La función \texttt{detectar\_minas}, que marca todas las minas que puede determinar con seguridad, itera sobre todo el tablero, lo que hace que su complejidad temporal sea $O(FILAS \times COLUMNAS)$.
+    \item El bucle principal de la función \texttt{heuristic} también itera sobre todo el tablero varias veces. En el peor de los casos, podría iterar potencialmente sobre el tablero una vez por cada cuadrado, lo que hace que su complejidad temporal sea $O((FILAS \times COLUMNAS)^2)$.
+    \item La función \texttt{calcular\_probabilidades}, que calcula la probabilidad de que cada cuadrado no visitado sea una mina, también itera sobre todo el tablero, lo que hace que su complejidad temporal sea $O(FILAS \times COLUMNAS)$.
+    \item La función \texttt{encontar\_slot\_seguro}, que encuentra el cuadrado con la menor probabilidad de ser una mina, itera sobre todas las probabilidades calculadas, que en el peor de los casos es el número de cuadrados, lo que hace que su complejidad temporal sea $O(FILAS \times COLUMNAS)$.
+\end{itemize}
+
+Por lo tanto, la complejidad temporal general de la función \texttt{heuristic} es $O((FILAS \times COLUMNAS)^2)$ en el peor de los casos.
+
+La complejidad espacial de la función \texttt{heuristic} está determinada por el almacenamiento del tablero de juego y el conjunto de probabilidades. Ambas estructuras de datos pueden almacenar potencialmente una entrada para cada cuadrado en el tablero, lo que hace que la complejidad espacial sea $O(FILAS \times COLUMNAS)$.
+
+Por lo tanto, la complejidad temporal general de la función \texttt{heuristic} es $O((FILAS * COLUMNAS)^2)$ en el peor de los casos.
+
+\section{Comparación Experimental}
+
+Para las pruebas se crearon dos códigos modificados (\texttt{fb\_sim.py} y \texttt{heu\_sim.py}), los cuales devolvían cada uno un archivo \texttt{.csv} con el tiempo para cada simulación y si lograron ganar. De esas tablas, obtuvimos la siguiente información:
+
+
+\begin{table}[htbp]
+\centering
+\caption{Comparación entre Fuerza Bruta y Heurística}
+\begin{tabular}{|l|c|c|}
+\hline
+\textbf{} & \textbf{Fuerza Bruta} & \textbf{Heurística} \\ \hline
+Promedio Tiempos (s) & 0.003470003605 & 0.001286444664 \\ \hline
+Juegos Ganados & 61 & 39 \\ \hline
+Juegos Perdidos & 39 & 61 \\ \hline
+\end{tabular}
+\end{table}
+
+\begin{enumerate}
+    \item \textbf{Promedio de Tiempos:}
+    
+    \begin{itemize}
+        \item Fuerza Bruta: 0.003470003605 segundos
+        \item Heurística: 0.001286444664 segundos
+    \end{itemize}
+    
+    La Heurística muestra un tiempo promedio significativamente menor en comparación con la Fuerza Bruta. Esto sugiere que la Heurística es más eficiente en términos de tiempo de ejecución para resolver el tablero de buscaminas y efectivamente se comprueba al ver las complejidades en la sección anterior.
+    
+    \item \textbf{Juegos Ganados:}
+    
+    \begin{itemize}
+        \item Fuerza Bruta: 61 juegos ganados
+        \item Heurística: 39 juegos ganados
+    \end{itemize}
+    
+    La Fuerza Bruta logró ganar más juegos que la Heurística. Esto podría indicar que la Fuerza Bruta tiene una estrategia más efectiva para resolver ciertos tipos de tableros de buscaminas que la Heurística y teniendo encuenta la logica de esta, tiene sentido que se equivoque de igual manera encuentra la respuesta casi el \ignorespacesafterend40\% de las veces.
+    
+    \item \textbf{Juegos Perdidos:}
+    
+    \begin{itemize}
+        \item Fuerza Bruta: 39 juegos perdidos
+        \item Heurística: 61 juegos perdidos
+    \end{itemize}
+    
+    La Heurística tuvo más juegos perdidos en comparación con la Fuerza Bruta. Esto sugiere que la Heurística puede tener una tasa de fallo más alta en ciertas situaciones o configuraciones de tablero.
+\end{enumerate}
+
+En resumen, la Heurística muestra una mayor eficiencia en términos de tiempo de ejecución, pero la Fuerza Bruta logró ganar más juegos. La elección entre utilizar la Heurística o la Fuerza Bruta dependerá de la prioridad dada a la velocidad versus la efectividad en términos de ganar juegos. Tambien se ha de aclarar que con tableros más grandes o con más minas, la complejidad de la opción de fuerza bruta la puede volver inviable a tales escalas.
+\end{document}
+
